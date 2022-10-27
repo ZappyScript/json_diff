@@ -1,15 +1,80 @@
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
 </head> 
+<body>
+</br>
+    <div class="container">
+      <div class="row justify-content-md-center">
+        <div class="col-6">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">New JSON url:</span>
+            </div>
+            <input type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default" value="https://raw.githubusercontent.com/oldschoolgg/oldschooljs/11c9f0229707c3fa4f5b7003823b5f28626a91f6/src/data/items/item_data.json" id="new_url">
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-md-center">
+        <div class="col-6">
+         <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Old JSON url:</span>
+            </div>
+            <input type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default" value="https://raw.githubusercontent.com/oldschoolgg/oldschooljs/master/src/data/items/item_data.json" id="old_url">
+          </div>
+        </div>
+      </div>
+
+      <div class="row justify-content-md-center">
+        <div class="col-2">
+         <button type="button" class="btn btn-primary" id="compare">Compare JSON</button>
+        </div>
+      </div>
+    </br>
+      <div class="row justify-content-md-center">
+        <div class="col-6">
+          <div class="alert alert-secondary" role="alert" id="status">
+            Awaiting to compare. Open console before comparing for status.
+          </div>
+        </div>
+      </div>
+    </br>
+      
+  <div class="row justify-content-md-center">
+    <div class="col-4">
+      ID Changes
+      <textarea class="form-control" id="changes" rows="6"></textarea> 
+    </div>
+    <div class="col-4">
+      Added items
+      <textarea class="form-control" id="added" rows="6"></textarea>
+    </div>
+    <div class="col-4">
+      Deleted items
+      <textarea class="form-control" id="removed" rows="6"></textarea>
+    </div>
+  </div>
+
+</div>
+</body>
+
+
+
+<footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+ <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
 
 <script>
 var new_json = [];
 var old_json = [];
 
-var new_json_link = "https://raw.githubusercontent.com/oldschoolgg/oldschooljs/11c9f0229707c3fa4f5b7003823b5f28626a91f6/src/data/items/item_data.json";
-var old_json_link = "https://raw.githubusercontent.com/oldschoolgg/oldschooljs/master/src/data/items/item_data.json";
+var new_json_link = "";
+var old_json_link = "";
 
 function main_loop(){
+  $("#status").html("Loading old json data");
   $.getJSON( old_json_link, function( data ) {
     old_json = data;
   }).then(() => load_new());
@@ -17,9 +82,11 @@ function main_loop(){
 }
 
 function load_new(){
+  $("#status").html("Loading new json data");
   $.getJSON( new_json_link, function( data ) {
     new_json = data;
-
+  }).done(function() {
+    $("#status").html("Got both data. Please wait whilst diff runs. Check console for status.")
   }).then(() => get_diff());
 
 } 
@@ -31,12 +98,26 @@ function get_diff(){
   var added_items = [];
   var id_cache = 0;
   var added = [];
+  var status_text= "";
 
-  console.log("new vs old");
+  console.log("Grabbing last ID in new json");
+  let new_json_size = 0;
+  $.each(new_json,function(k,v){
+    new_json_size = v.id;
+  });
+
+  console.log("Grabbing last ID in old json");
+  let old_json_size = 0;
+  $.each(old_json,function(k,v){
+    old_json_size = v.id;
+  });
+
+  status_text = "Running diff on new vs old (Finding added items) ";
 
   //get differed item names + added items
   $.each(new_json,function(k,v){
     id_cache = v.id;
+    console.log(status_text + v.id + "/"+ new_json_size);
     $.each(old_json,function(j,l){
       if(v.id == l.id){
         id_cache = 0;
@@ -54,10 +135,12 @@ function get_diff(){
 
   });
 
-  console.log("running old vs new");
+  status_text = "Running diff on old vs new (Finding deleted items) ";
+  
   //get removed items
   $.each(old_json,function(k,v){
     id_cache = v.id;
+    console.log(status_text + v.id + "/"+ old_json_size);
     $.each(new_json,function(j,l){
       if(v.id == l.id){
         id_cache = 0;
@@ -71,17 +154,51 @@ function get_diff(){
 
   });
 
-  console.log("Finished");
+  var diff_names_html = "";
+  $.each(diff_names,function(k,v){
+    diff_names_html += v[0].id + ": NEW='"+v[0].name+"'' OLD='"+v[1].name+"'\n";
+
+  });
+  $("#changes").val(diff_names_html);
+
+  var added_html = "";
+  $.each(added_items,function(k,v){
+    added_html += v.id + ":'"+v.name+"'\n";
+
+  });
+  $("#added").val(added_html);
+
+  var removed_html = "";
+  $.each(removed_items,function(k,v){
+    removed_html += v.id + ":'"+v.name+"'\n";
+
+  });
+  $("#removed").val(removed_html);
+
+  $("#status").html("Finished. Find data below. Find raw data in console.");
+  console.log("ID Changes:");
   console.log(diff_names);
-  console.log(removed_items);
+  console.log("Added items:");
   console.log(added_items);
+  console.log("Removed items:");
+  console.log(removed_items);
 
 }
 
 
-$( document ).ready(function() {
+$(document).ready(function() {
+  $("#compare").click(function() {
+    $("#changes").val("");
+    $("#added").val("");
+    $("#removed").val("");
+    new_json_link = $("#new_url").val();
+    old_json_link = $("#old_url").val();
     main_loop();
+  });
+   
 });
 
 
 </script>
+
+</footer>
