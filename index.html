@@ -1,0 +1,87 @@
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head> 
+
+<script>
+var new_json = [];
+var old_json = [];
+
+var new_json_link = "https://raw.githubusercontent.com/oldschoolgg/oldschooljs/11c9f0229707c3fa4f5b7003823b5f28626a91f6/src/data/items/item_data.json";
+var old_json_link = "https://raw.githubusercontent.com/oldschoolgg/oldschooljs/master/src/data/items/item_data.json";
+
+function main_loop(){
+  $.getJSON( old_json_link, function( data ) {
+    old_json = data;
+  }).then(() => load_new());
+
+}
+
+function load_new(){
+  $.getJSON( new_json_link, function( data ) {
+    new_json = data;
+
+  }).then(() => get_diff());
+
+} 
+
+
+function get_diff(){
+  var diff_names = [];
+  var removed_items = [];
+  var added_items = [];
+  var id_cache = 0;
+  var added = [];
+
+  console.log("new vs old");
+
+  //get differed item names + added items
+  $.each(new_json,function(k,v){
+    id_cache = v.id;
+    $.each(old_json,function(j,l){
+      if(v.id == l.id){
+        id_cache = 0;
+        if(v.name != l.name){
+          diff_names.push([v,l]);
+          return;
+        }
+      }
+
+    });
+
+    if(id_cache != 0){
+        added_items.push(v);
+    }
+
+  });
+
+  console.log("running old vs new");
+  //get removed items
+  $.each(old_json,function(k,v){
+    id_cache = v.id;
+    $.each(new_json,function(j,l){
+      if(v.id == l.id){
+        id_cache = 0;
+      }
+
+    });
+
+    if(id_cache != 0){
+      removed_items.push(v);
+    }
+
+  });
+
+  console.log("Finished");
+  console.log(diff_names);
+  console.log(removed_items);
+  console.log(added_items);
+
+}
+
+
+$( document ).ready(function() {
+    main_loop();
+});
+
+
+</script>
